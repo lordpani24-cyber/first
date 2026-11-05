@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suratan Maaf & Semesta Kita</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;1,400&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        space: {
+                            900: '#070913',
+                            800: '#0f1325',
+                            700: '#19203f',
+                        },
+                        rose: {
+                            gold: '#b76e79',
+                            glow: '#ff758c',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        serif: ['"Playfair Display"', 'serif'],
+                        cursive: ['"Dancing Script"', 'cursive'],
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'float': 'float 6s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #070913;
+            color: #f3f4f6;
+            overflow-x: hidden;
+            user-select: none;
+        }
+        .glass-panel {
+            background: rgba(19, 23, 46, 0.6);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .glass-card:hover {
+            background: rgba(255, 255, 255, 0.07);
+            border-color: rgba(255, 117, 140, 0.3);
+        }
+        .text-gradient {
+            background: linear-gradient(135deg, #ff758c 0%, #ff7eb3 50%, #e2b0ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #070913;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #19203f;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #ff758c;
+        }
+
+        /* Slide Sheet Animation Styles */
+        .slider-wrapper {
+            position: relative;
+            width: 100%;
+            height: 380px;
+            overflow: hidden;
+            border-radius: 1.5rem;
+        }
+        .slide-card {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transform: translateX(100%) scale(0.95);
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            pointer-events: none;
+        }
+        .slide-card.active {
+            opacity: 1;
+            transform: translateX(0) scale(1);
+            pointer-events: auto;
+            z-index: 10;
+        }
+        .slide-card.prev {
+            opacity: 0;
+            transform: translateX(-100%) scale(0.95);
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="min-h-screen relative font-sans antialiased selection:bg-rose-500 selection:text-white">
+
+    <!-- Canvas Ambient Starfield -->
+    <canvas id="starfield" class="fixed inset-0 pointer-events-none z-0"></canvas>
+
+    <!-- Glowing Background Atmosphere -->
+    <div class="fixed top-1/4 left-1/4 w-96 h-96 bg-rose-500/10 rounded-full blur-[130px] pointer-events-none animate-pulse-slow"></div>
+    <div class="fixed bottom-1/4 right-1/4 w-[28rem] h-[28rem] bg-indigo-500/10 rounded-full blur-[150px] pointer-events-none animate-pulse-slow"></div>
+
+    <!-- Main Container -->
+    <div class="relative z-10 max-w-4xl mx-auto px-4 py-8 md:py-12 space-y-10">
+
+        <!-- Header Controls -->
+        <header class="flex justify-between items-center glass-panel px-6 py-4 rounded-full sticky top-4 z-50">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-rose-500 to-purple-600 flex items-center justify-center shadow-lg shadow-rose-500/30">
+                    <i data-lucide="heart" class="w-5 h-5 text-white fill-white animate-pulse"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg leading-tight tracking-wide text-gradient font-serif" id="headerNames">Untuk Sayangku</h1>
+                    <p class="text-xs text-gray-400">Pintaku & Perjalanan Kita</p>
+                </div>
+            </div>
+
+            <!-- Header Action Buttons -->
+            <div class="flex items-center space-x-3">
+                <button id="audioToggle" onclick="toggleAudioEngine()" class="p-2.5 rounded-full glass-card hover:bg-rose-500/20 text-gray-300 hover:text-white transition duration-300 relative group" title="Putar Musik Ambient Relaxing">
+                    <i data-lucide="music" class="w-5 h-5"></i>
+                    <span class="absolute -bottom-8 left-1/2 -translate-x-1/2 text-[10px] bg-space-800 px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap border border-white/10">Musik Relaxing</span>
+                </button>
+                <button onclick="toggleModal('customizerModal')" class="p-2.5 rounded-full glass-card hover:bg-rose-500/20 text-gray-300 hover:text-white transition duration-300 relative group" title="Pengaturan Nama & Tanggal">
+                    <i data-lucide="settings-2" class="w-5 h-5"></i>
+                    <span class="absolute -bottom-8 left-1/2 -translate-x-1/2 text-[10px] bg-space-800 px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap border border-white/10">Edit Data</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Hero Section: Apology Message & Realtime Counter -->
+        <section class="text-center space-y-6 pt-4">
+            <div class="inline-flex items-center space-x-2 px-4 py-1.5 rounded-full glass-card text-xs font-medium text-rose-300 border border-rose-500/20 animate-float">
+                <i data-lucide="sparkles" class="w-4 h-4 text-rose-400"></i>
+                <span>Ungkapan Dari Lubuk Hati Terdalam</span>
+            </div>
+            
+            <!-- Main Apology Text -->
+            <h2 class="text-3xl md:text-5xl font-extrabold font-serif tracking-tight leading-snug px-2">
+                <span class="text-gradient">hii sayangg aku mau meminta maaf atas kesalahan akuu</span>
+            </h2>
+
+            <p class="text-sm md:text-base text-gray-300 max-w-xl mx-auto leading-relaxed">
+                Terima kasih sudah mau bertahan dan mendengarkanku. Ini adalah catatan detik demi detik perjalanan waktu bersama sejak momen spesial kita.
+            </p>
+
+            <!-- Relationship Realtime Timer -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-2xl mx-auto pt-4">
+                <div class="glass-panel p-4 rounded-2xl border border-white/5 relative overflow-hidden group">
+                    <div class="text-3xl md:text-5xl font-extrabold text-gradient" id="timerDays">00</div>
+                    <div class="text-xs uppercase tracking-wider text-gray-400 mt-1 font-semibold">Hari</div>
+                </div>
+                <div class="glass-panel p-4 rounded-2xl border border-white/5 relative overflow-hidden group">
+                    <div class="text-3xl md:text-5xl font-extrabold text-white" id="timerHours">00</div>
+                    <div class="text-xs uppercase tracking-wider text-gray-400 mt-1 font-semibold">Jam</div>
+                </div>
+                <div class="glass-panel p-4 rounded-2xl border border-white/5 relative overflow-hidden group">
+                    <div class="text-3xl md:text-5xl font-extrabold text-white" id="timerMinutes">00</div>
+                    <div class="text-xs uppercase tracking-wider text-gray-400 mt-1 font-semibold">Menit</div>
+                </div>
+                <div class="glass-panel p-4 rounded-2xl border border-white/5 relative overflow-hidden group">
+                    <div class="text-3xl md:text-5xl font-extrabold text-rose-400" id="timerSeconds">00</div>
+                    <div class="text-xs uppercase tracking-wider text-gray-400 mt-1 font-semibold">Detik</div>
+                </div>
+            </div>
+            <p class="text-xs text-gray-400 italic" id="startDateDisplay">Terhitung Sejak 1 November 2026</p>
+        </section>
+
+        <!-- Feature 1: Slide Sheet Photo Gallery -->
+        <section class="glass-panel p-6 md:p-8 rounded-3xl space-y-6">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h3 class="text-2xl font-bold font-serif text-white flex items-center gap-2">
+                        <i data-lucide="image" class="w-6 h-6 text-rose-400"></i>
+                        Galeri Kenangan Indah
+                    </h3>
+                    <p class="text-sm text-gray-400">Geser lembaran memori manis kita di bawah ini.</p>
+                </div>
+                <button onclick="toggleModal('addPhotoModal')" class="px-4 py-2 rounded-xl bg-rose-500/20 text-rose-300 hover:bg-rose-500/30 text-xs font-semibold flex items-center gap-2 border border-rose-500/30 transition">
+                    <i data-lucide="plus" class="w-4 h-4"></i> Tambah Foto Baru
+                </button>
+            </div>
+
+            <!-- Sliding Card Container -->
+            <div class="relative">
+                <div class="slider-wrapper glass-card p-2 border border-white/10" id="sliderWrapper">
+                    <!-- Slides loaded via JS -->
+                </div>
+
+                <!-- Navigation Controls -->
+                <div class="flex items-center justify-between mt-4">
+                    <button onclick="prevSlide()" class="p-3 rounded-full glass-card hover:bg-white/10 text-white transition active:scale-95">
+                        <i data-lucide="chevron-left" class="w-5 h-5"></i>
+                    </button>
+                    
+                    <!-- Pagination Indicators -->
+                    <div class="flex space-x-2" id="slideDots"></div>
+
+                    <button onclick="nextSlide()" class="p-3 rounded-full glass-card hover:bg-white/10 text-white transition active:scale-95">
+                        <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Feature 2: Target & Impian Bersama (Customizable Bucket List) -->
+        <section class="glass-panel p-6 md:p-8 rounded-3xl space-y-6">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h3 class="text-2xl font-bold font-serif text-white flex items-center gap-2">
+                        <i data-lucide="check-square" class="w-6 h-6 text-emerald-400"></i>
+                        Target & Impian Bersama
+                    </h3>
+                    <p class="text-sm text-gray-400">Tuliskan impian dan hal-hal manis yang ingin kita wujudkan bersama.</p>
+                </div>
+                <span class="text-xs font-semibold px-3 py-1.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 self-start md:self-auto" id="bucketProgress">0% Tercapai</span>
+            </div>
+
+            <!-- Add Target Form Input -->
+            <form onsubmit="addBucketItem(event)" class="flex gap-2">
+                <input type="text" id="newBucketInput" placeholder="Tulis target impian baru kita di sini..." class="flex-1 px-4 py-3 rounded-2xl glass-card text-white text-sm border border-white/10 focus:outline-none focus:border-emerald-400 transition" required>
+                <button type="submit" class="px-5 py-3 rounded-2xl bg-emerald-500 text-white text-sm font-semibold hover:bg-emerald-600 active:scale-95 transition flex items-center gap-1.5 shadow-lg shadow-emerald-500/20 whitespace-nowrap">
+                    <i data-lucide="plus-circle" class="w-4 h-4"></i> Tambah
+                </button>
+            </form>
+
+            <!-- List Container -->
+            <div class="space-y-3 pt-2" id="bucketListContainer">
+                <!-- Items populated dynamically -->
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="text-center py-8 text-xs text-gray-500 space-y-2">
+            <p class="font-serif italic text-gray-400">"Maafkan kekuranganku, mari rangkai kembali hari esok yang indah bersamamu."</p>
+            <p>© Semesta Kita — Dibuat Khusus Untukmu ❤️</p>
+        </footer>
+
+    </div>
+
+    <!-- MODAL: Edit Data Pasangan -->
+    <div id="customizerModal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-md hidden flex items-center justify-center p-4">
+        <div class="glass-panel p-6 md:p-8 rounded-3xl max-w-md w-full space-y-5 border border-rose-500/30">
+            <div class="flex justify-between items-center">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2 font-serif">
+                    <i data-lucide="settings" class="w-5 h-5 text-rose-400"></i> Pengaturan Waktu & Nama
+                </h3>
+                <button onclick="toggleModal('customizerModal')" class="text-gray-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+
+            <div class="space-y-4 text-sm">
+                <div>
+                    <label class="block text-xs font-medium text-gray-300 mb-1">Nama Pasangan / Panggilan</label>
+                    <input type="text" id="inputNames" class="w-full px-3.5 py-2.5 rounded-xl glass-card text-white border border-white/10 focus:outline-none focus:border-rose-400" placeholder="Untuk Sayangku">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-300 mb-1">Tanggal & Waktu Mulai (Default: 1 Nov 2026)</label>
+                    <input type="datetime-local" id="inputDate" class="w-full px-3.5 py-2.5 rounded-xl glass-card text-white border border-white/10 focus:outline-none focus:border-rose-400">
+                </div>
+            </div>
+
+            <div class="flex justify-end space-x-3 pt-2">
+                <button onclick="saveCustomizations()" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-rose-500 to-purple-600 text-white font-semibold text-xs shadow-lg shadow-rose-500/30 hover:scale-[1.02] active:scale-95 transition">
+                    Simpan Pengaturan
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Tambah Foto Galeri -->
+    <div id="addPhotoModal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-md hidden flex items-center justify-center p-4">
+        <div class="glass-panel p-6 md:p-8 rounded-3xl max-w-md w-full space-y-5 border border-rose-500/30">
+            <div class="flex justify-between items-center">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2 font-serif">
+                    <i data-lucide="camera" class="w-5 h-5 text-rose-400"></i> Tambah Kenangan Foto
+                </h3>
+                <button onclick="toggleModal('addPhotoModal')" class="text-gray-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+
+            <form onsubmit="addPhotoItem(event)" class="space-y-4 text-sm">
+                <div>
+                    <label class="block text-xs font-medium text-gray-300 mb-1">URL Foto (Link Gambar Online)</label>
+                    <input type="url" id="inputPhotoUrl" class="w-full px-3.5 py-2.5 rounded-xl glass-card text-white border border-white/10 focus:outline-none focus:border-rose-400" placeholder="https://..." required>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-300 mb-1">Pesan / Caption Foto</label>
+                    <input type="text" id="inputPhotoCaption" class="w-full px-3.5 py-2.5 rounded-xl glass-card text-white border border-white/10 focus:outline-none focus:border-rose-400" placeholder="Momen manis kita saat..." required>
+                </div>
+                <button type="submit" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-rose-500 to-purple-600 text-white font-semibold text-xs shadow-lg shadow-rose-500/30 hover:scale-[1.02] active:scale-95 transition">
+                    Tambahkan ke Galeri
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- JavaScript App Engine -->
+    <script>
+        // State Configuration (Local Storage Saved)
+        let config = {
+            names: localStorage.getItem('bucin_maaf_names') || 'Untuk Sayangku',
+            startDate: localStorage.getItem('bucin_maaf_date') || '2026-11-01T00:00'
+        };
+
+        // Bucket List State (Initial Empty as requested)
+        let bucketList = JSON.parse(localStorage.getItem('bucin_maaf_bucket')) || [];
+
+        // Gallery Photos State
+        let galleryData = JSON.parse(localStorage.getItem('bucin_maaf_gallery')) || [
+            { url: 'https://images.unsplash.com/photo-1518199266791-5375a83190b7?q=80&w=800&auto=format&fit=crop', caption: 'Kenangan manis senyuman indahmu.' },
+            { url: 'https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?q=80&w=800&auto=format&fit=crop', caption: 'Tertawa bahagia saat kita menghabiskan waktu berdua.' },
+            { url: 'https://images.unsplash.com/photo-1529333166437-7750a6dd5a70?q=80&w=800&auto=format&fit=crop', caption: 'Setiap momen bersamamu selalu jadi favoritku.' }
+        ];
+
+        let currentSlideIdx = 0;
+
+        // Web Audio Relaxing Soundscape Synth
+        let audioCtx = null;
+        let isAudioPlaying = false;
+        let ambientOsc1, ambientOsc2, masterGain;
+
+        function initAudioEngine() {
+            if (!audioCtx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                audioCtx = new AudioContext();
+            }
+        }
+
+        function toggleAudioEngine() {
+            initAudioEngine();
+            const btn = document.getElementById('audioToggle');
+            
+            if (isAudioPlaying) {
+                masterGain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 1);
+                setTimeout(() => {
+                    if (ambientOsc1) ambientOsc1.stop();
+                    if (ambientOsc2) ambientOsc2.stop();
+                }, 1000);
+                isAudioPlaying = false;
+                btn.classList.remove('bg-rose-500/30', 'text-rose-400');
+            } else {
+                audioCtx.resume();
+                masterGain = audioCtx.createGain();
+                masterGain.gain.setValueAtTime(0.01, audioCtx.currentTime);
+                masterGain.gain.exponentialRampToValueAtTime(0.12, audioCtx.currentTime + 2);
+
+                ambientOsc1 = audioCtx.createOscillator();
+                ambientOsc2 = audioCtx.createOscillator();
+
+                ambientOsc1.type = 'sine';
+                ambientOsc2.type = 'triangle';
+
+                // Soft relaxing frequencies
+                ambientOsc1.frequency.setValueAtTime(220, audioCtx.currentTime); // A3
+                ambientOsc2.frequency.setValueAtTime(329.63, audioCtx.currentTime); // E4
+
+                const filter = audioCtx.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(350, audioCtx.currentTime);
+
+                ambientOsc1.connect(filter);
+                ambientOsc2.connect(filter);
+                filter.connect(masterGain);
+                masterGain.connect(audioCtx.destination);
+
+                ambientOsc1.start();
+                ambientOsc2.start();
+
+                isAudioPlaying = true;
+                btn.classList.add('bg-rose-500/30', 'text-rose-400');
+                playToneSound(523.25, 'sine', 0.2);
+            }
+        }
+
+        function playToneSound(freq = 440, type = 'sine', duration = 0.3) {
+            try {
+                initAudioEngine();
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                
+                gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch(e) {}
+        }
+
+        // App Initialization
+        window.addEventListener('load', () => {
+            lucide.createIcons();
+            updateCustomizerUI();
+            startRelationshipTimer();
+            renderBucketList();
+            renderSlider();
+            initStarfield();
+        });
+
+        function toggleModal(id) {
+            const modal = document.getElementById(id);
+            modal.classList.toggle('hidden');
+        }
+
+        function updateCustomizerUI() {
+            document.getElementById('headerNames').innerText = config.names;
+            document.getElementById('inputNames').value = config.names;
+            document.getElementById('inputDate').value = config.startDate;
+            
+            const dateObj = new Date(config.startDate);
+            const options = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+            document.getElementById('startDateDisplay').innerText = `Terhitung Sejak ${dateObj.toLocaleDateString('id-ID', options)}`;
+        }
+
+        function saveCustomizations() {
+            config.names = document.getElementById('inputNames').value || 'Untuk Sayangku';
+            config.startDate = document.getElementById('inputDate').value || '2026-11-01T00:00';
+
+            localStorage.setItem('bucin_maaf_names', config.names);
+            localStorage.setItem('bucin_maaf_date', config.startDate);
+
+            updateCustomizerUI();
+            toggleModal('customizerModal');
+            playToneSound(659.25, 'sine', 0.3);
+            confetti({ particleCount: 30, spread: 50 });
+        }
+
+        // Realtime Timer Counter
+        function startRelationshipTimer() {
+            function updateTimer() {
+                const start = new Date(config.startDate).getTime();
+                const now = new Date().getTime();
+                const diff = Math.max(0, now - start);
+
+                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+                document.getElementById('timerDays').innerText = String(days).padStart(2, '0');
+                document.getElementById('timerHours').innerText = String(hours).padStart(2, '0');
+                document.getElementById('timerMinutes').innerText = String(minutes).padStart(2, '0');
+                document.getElementById('timerSeconds').innerText = String(seconds).padStart(2, '0');
+            }
+            updateTimer();
+            setInterval(updateTimer, 1000);
+        }
+
+        // Galeri Slide Cards Engine
+        function renderSlider() {
+            const wrapper = document.getElementById('sliderWrapper');
+            const dotsContainer = document.getElementById('slideDots');
+            
+            wrapper.innerHTML = '';
+            dotsContainer.innerHTML = '';
+
+            galleryData.forEach((item, idx) => {
+                // Render Slide Card
+                const card = document.createElement('div');
+                card.className = `slide-card ${idx === currentSlideIdx ? 'active' : (idx < currentSlideIdx ? 'prev' : '')}`;
+                card.innerHTML = `
+                    <div class="relative w-full h-full rounded-2xl overflow-hidden group">
+                        <img src="${item.url}" alt="Memory" class="w-full h-full object-cover">
+                        <div class="absolute inset-0 bg-gradient-to-t from-space-900 via-transparent to-transparent opacity-90"></div>
+                        <div class="absolute bottom-4 left-4 right-4 text-center space-y-1">
+                            <p class="text-sm font-medium text-white font-serif drop-shadow-md">"${item.caption}"</p>
+                        </div>
+                    </div>
+                `;
+                wrapper.appendChild(card);
+
+                // Render Dot Indicator
+                const dot = document.createElement('button');
+                dot.className = `w-2.5 h-2.5 rounded-full transition-all ${idx === currentSlideIdx ? 'bg-rose-400 w-6' : 'bg-white/20'}`;
+                dot.onclick = () => goToSlide(idx);
+                dotsContainer.appendChild(dot);
+            });
+        }
+
+        function nextSlide() {
+            if (galleryData.length === 0) return;
+            currentSlideIdx = (currentSlideIdx + 1) % galleryData.length;
+            renderSlider();
+            playToneSound(440, 'sine', 0.1);
+        }
+
+        function prevSlide() {
+            if (galleryData.length === 0) return;
+            currentSlideIdx = (currentSlideIdx - 1 + galleryData.length) % galleryData.length;
+            renderSlider();
+            playToneSound(440, 'sine', 0.1);
+        }
+
+        function goToSlide(idx) {
+            currentSlideIdx = idx;
+            renderSlider();
+        }
+
+        function addPhotoItem(e) {
+            e.preventDefault();
+            const url = document.getElementById('inputPhotoUrl').value;
+            const caption = document.getElementById('inputPhotoCaption').value;
+
+            galleryData.push({ url, caption });
+            localStorage.setItem('bucin_maaf_gallery', JSON.stringify(galleryData));
+
+            currentSlideIdx = galleryData.length - 1;
+            renderSlider();
+
+            document.getElementById('inputPhotoUrl').value = '';
+            document.getElementById('inputPhotoCaption').value = '';
+            toggleModal('addPhotoModal');
+
+            playToneSound(659.25, 'sine', 0.3);
+            confetti({ particleCount: 40, spread: 60 });
+        }
+
+        // Target & Impian Bersama (Bucket List Manager)
+        function renderBucketList() {
+            const container = document.getElementById('bucketListContainer');
+            container.innerHTML = '';
+
+            if (bucketList.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-8 glass-card rounded-2xl border border-white/5 space-y-2">
+                        <i data-lucide="sparkles" class="w-8 h-8 text-gray-500 mx-auto"></i>
+                        <p class="text-xs text-gray-400">Belum ada target impian yang ditulis. Yuk tulis impian pertama kalian di atas!</p>
+                    </div>
+                `;
+                document.getElementById('bucketProgress').innerText = `0% Tercapai`;
+                lucide.createIcons();
+                return;
+            }
+
+            let completedCount = 0;
+            bucketList.forEach((item, idx) => {
+                if (item.done) completedCount++;
+                const div = document.createElement('div');
+                div.className = `flex items-center justify-between p-3.5 rounded-2xl glass-card border ${item.done ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-white/5'} transition group`;
+                div.innerHTML = `
+                    <div class="flex items-center space-x-3 cursor-pointer flex-1" onclick="toggleBucket(${idx})">
+                        <div class="w-5 h-5 rounded-lg flex items-center justify-center border transition ${item.done ? 'bg-emerald-500 border-emerald-400 text-white' : 'border-gray-500 bg-white/5'}">
+                            ${item.done ? '<i data-lucide="check" class="w-3.5 h-3.5"></i>' : ''}
+                        </div>
+                        <span class="text-xs font-medium ${item.done ? 'line-through text-gray-400' : 'text-gray-200'}">${item.text}</span>
+                    </div>
+                    <button onclick="deleteBucketItem(${idx})" class="p-1.5 rounded-lg hover:bg-rose-500/20 text-gray-400 hover:text-rose-400 transition" title="Hapus target">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </button>
+                `;
+                container.appendChild(div);
+            });
+
+            const pct = Math.round((completedCount / bucketList.length) * 100);
+            document.getElementById('bucketProgress').innerText = `${pct}% Tercapai`;
+            lucide.createIcons();
+        }
+
+        function addBucketItem(e) {
+            e.preventDefault();
+            const input = document.getElementById('newBucketInput');
+            const text = input.value.trim();
+            
+            if (text) {
+                bucketList.push({ id: Date.now(), text: text, done: false });
+                localStorage.setItem('bucin_maaf_bucket', JSON.stringify(bucketList));
+                input.value = '';
+                renderBucketList();
+                playToneSound(523.25, 'sine', 0.2);
+            }
+        }
+
+        function toggleBucket(idx) {
+            bucketList[idx].done = !bucketList[idx].done;
+            localStorage.setItem('bucin_maaf_bucket', JSON.stringify(bucketList));
+            renderBucketList();
+            playToneSound(itemDoneSound(bucketList[idx].done), 'sine', 0.2);
+        }
+
+        function itemDoneSound(isDone) {
+            return isDone ? 659.25 : 300;
+        }
+
+        function deleteBucketItem(idx) {
+            bucketList.splice(idx, 1);
+            localStorage.setItem('bucin_maaf_bucket', JSON.stringify(bucketList));
+            renderBucketList();
+            playToneSound(250, 'sawtooth', 0.15);
+        }
+
+        // Soft Starfield Canvas Background
+        let canvas, ctx, stars = [];
+
+        function initStarfield() {
+            canvas = document.getElementById('starfield');
+            ctx = canvas.getContext('2d');
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+
+            stars = [];
+            for (let i = 0; i < 90; i++) {
+                stars.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    radius: Math.random() * 1.2 + 0.5,
+                    alpha: Math.random(),
+                    speed: Math.random() * 0.015 + 0.005
+                });
+            }
+
+            animateStarfield();
+        }
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        function animateStarfield() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            stars.forEach(star => {
+                star.alpha += star.speed;
+                if (star.alpha > 1 || star.alpha < 0) star.speed = -star.speed;
+
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(255, 255, 255, ${Math.abs(star.alpha)})`;
+                ctx.fill();
+            });
+
+            requestAnimationFrame(animateStarfield);
+        }
+    </script>
+</body>
+</html>
